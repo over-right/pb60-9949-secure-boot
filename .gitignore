@@ -1,0 +1,15 @@
+/build/
+/usb-files/
+*.efi
+*.rom
+*.cap
+*.bin
+*.fd
+*.img
+*.iso
+*.log
+*.obj
+PB60EFI-*.TXT
+PB60_CUSTOM.TXT
+*.pem
+*.key
