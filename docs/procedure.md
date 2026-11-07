@@ -2,17 +2,18 @@
 
 I verified this procedure on my ASUS PB60-based Crestron UC-Engine running BIOS 9949. The current helper adds lowercase confirmation, which was tested offline in a Secure Boot VM. I verified the firmware backup by comparing repeated reads. Restoration from that backup remains untested. Keep a backup of important data, the existing EFI media files, and your machine's own firmware before testing. On encrypted Windows systems, make sure you have the recovery key before changing Secure Boot. Do not clear the TPM.
 
-## 1. Build and prepare a USB
+## 1. Download the helpers and prepare a USB
 
-Build with an x64 LLVM-MinGW toolchain. The reference toolchain was the [2026-10-06 x86-64 UCRT release](https://github.com/mstorsjo/llvm-mingw/releases/tag/20261006). The scripts require no firmware image, third-party driver, or admin rights to compile the helpers.
+Download `PB60DIAG.EFI`, `PB60MODE.EFI`, and `SHA256SUMS.txt` from the [v0.1.0 release](https://github.com/over-right/pb60-9949-secure-boot/releases/tag/v0.1.0) into the same folder. From that folder, run this in PowerShell.
 
 ```powershell
-./build.ps1 -ToolchainBin 'C:\path\to\llvm-mingw\bin' -VerifyReference
+Get-FileHash -Algorithm SHA256 .\PB60DIAG.EFI, .\PB60MODE.EFI
+Get-Content .\SHA256SUMS.txt
 ```
 
-The optional reference check compares the ordinary file SHA-256. Shim uses the PE image hash. A different compiler or rebuilt binary may produce a different digest. Review the source before trusting a build. The current writer's file SHA-256 is `45e8693e5bf57085d405e00106c0edb82262e5b8255cd35d412910bdeba50809`. Its PE image SHA-256 is `2bc3c4aac327b314a2bdd5282f8570e9bbc0aedc2066711afa76c625ee476e8b`. If you enrolled the earlier uppercase-only writer, the current build needs its own hash enrollment.
+Compare each file's hash against the line for that filename in `SHA256SUMS.txt`. Stop if either hash differs. The release also lists the separate PE image hashes used by shim. MokManager computes that hash when you select an EFI file during enrollment. If you enrolled the earlier uppercase-only writer, the current writer needs its own hash enrollment. To compile the helpers yourself, use the [optional source build instructions](#optional-build-from-source), then use the resulting EFI files in the same USB layout.
 
-Use a spare FAT32 UEFI USB. Identify it by size and device before copying. Obtain `bootx64.efi` (shim), `grubx64.efi`, and `mmx64.efi` (MokManager) together from the same verified, signed amd64 Ubuntu media. The hardware run used the same signed files previously booted on that unit. Compatibility of other Ubuntu builds depends on the machine's allowed signatures, revocations and SBAT. See [Ubuntu's Secure Boot documentation](https://documentation.ubuntu.com/security/security-features/platform-protections/secure-boot/).
+Use a spare FAT32 UEFI USB. Identify it by size and device before copying. Create the folders shown below and copy the two verified helpers into `EFI/BOOT/` with the filenames shown. Obtain `bootx64.efi` (shim), `grubx64.efi`, and `mmx64.efi` (MokManager) separately, all from the same verified, signed amd64 Ubuntu media. The hardware run used the same signed files previously booted on that unit. Compatibility of other Ubuntu builds depends on the machine's allowed signatures, revocations and SBAT. See [Ubuntu's Secure Boot documentation](https://documentation.ubuntu.com/security/security-features/platform-protections/secure-boot/).
 
 ```text
 USB root/
@@ -21,8 +22,8 @@ USB root/
   EFI/BOOT/bootx64.efi        # original signed shim
   EFI/BOOT/grubx64.efi        # original signed GRUB
   EFI/BOOT/mmx64.efi          # matching signed MokManager
-  EFI/BOOT/PB60DIAG.EFI       # local read-only image
-  EFI/BOOT/PB60MODE.EFI       # local one-attempt writer
+  EFI/BOOT/PB60DIAG.EFI       # read-only helper from the release
+  EFI/BOOT/PB60MODE.EFI       # one-attempt writer from the release
   EFI/BOOT/grub.cfg
   EFI/ubuntu/grub.cfg
   boot/grub/grub.cfg
@@ -56,3 +57,13 @@ Record the pre-deletion state and, if you want proof of which databases changed,
 3. Save/exit and boot Windows normally. Administrator PowerShell should report `Confirm-SecureBootUEFI` as `False`, `Get-SecureBootUEFI -Name PK` as undefined, and `SetupMode` byte `01`. Check that the `KEK`, `db`, and `dbx` sizes and SHA-256 hashes are unchanged. A future key restore or update can change this state.
 
 The diagnostic hashes remain separate from the firmware key databases. If cleanup is desired, a [supported `mokutil` build](https://github.com/lcp/mokutil/blob/master/man/mokutil.1) can queue removal of each exact image hash (`--delete-hash`) for physical confirmation in MokManager. Do not reset all MOK entries. Cleanup was not part of the measured hardware result.
+
+## Optional build from source
+
+From the repository root, build with an x64 LLVM-MinGW toolchain. The reference toolchain was the [2026-10-06 x86-64 UCRT release](https://github.com/mstorsjo/llvm-mingw/releases/tag/20261006).
+
+```powershell
+./build.ps1 -ToolchainBin 'C:\path\to\llvm-mingw\bin' -VerifyReference
+```
+
+The script writes `build/PB60DIAG.EFI` and `build/PB60MODE.EFI`. The optional reference check verifies their file SHA-256 values. If you build with a different toolchain, the binary hashes may change. Enroll the exact binaries you place on the USB.
