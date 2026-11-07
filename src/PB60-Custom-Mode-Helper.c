@@ -63,12 +63,15 @@ static int boot_state(SYSTEM *s) {
  return exact(s,L"SecureBoot",&globalGuid,6,&on,1) && exact(s,L"SetupMode",&globalGuid,6,&user,1);
 }
 static int confirm(SYSTEM *s) {
- const C16 phrase[]=L"CUSTOM\r";
+ const C16 phrase[]=L"custom\r";
  if(!s->cin || !s->cin->wait || s->cin->reset(s->cin,0)!=0)return 0;
- say(s,"Type CUSTOM in uppercase, then Enter. Any other key cancels.\r\nPB60_CONFIRM_READY\r\n");
+ say(s,"Type custom, then Enter. Letter case does not matter. Any other key cancels.\r\nPB60_CONFIRM_READY\r\n");
  for(N i=0;phrase[i];i++) {
   N index=0;KEY key;
-  if(((WAIT)s->bs->fn[9])(1,&s->cin->wait,&index)!=0 || s->cin->read(s->cin,&key)!=0 || key.scan || key.character!=phrase[i])return 0;
+  if(((WAIT)s->bs->fn[9])(1,&s->cin->wait,&index)!=0 || s->cin->read(s->cin,&key)!=0 || key.scan)return 0;
+  C16 character=key.character;
+  if(character>=L'A' && character<=L'Z')character+=L'a'-L'A';
+  if(character!=phrase[i])return 0;
  }
  return 1;
 }

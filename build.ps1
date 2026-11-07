@@ -7,7 +7,7 @@ $dest = Join-Path $PSScriptRoot 'build'
 [IO.Directory]::CreateDirectory($dest) | Out-Null
 $images = @(
     @{Source='PB60-EFI-Diagnostic'; Target='PB60DIAG'; Timestamp=1791961644; Reference='338a938364a1ddfffe412999a5c27e0ff04f21a08d0fc309ffd417f172003c59'},
-    @{Source='PB60-Custom-Mode-Helper'; Target='PB60MODE'; Timestamp=0; Reference='a6b92895582aec910a8f0139a03d850a6ccd5b1f3513decb4b8d51afcde92b45'}
+    @{Source='PB60-Custom-Mode-Helper'; Target='PB60MODE'; Timestamp=0; Reference='45e8693e5bf57085d405e00106c0edb82262e5b8255cd35d412910bdeba50809'}
 )
 foreach ($item in $images) {
     $source = Join-Path $PSScriptRoot ('src\' + $item.Source + '.c')
