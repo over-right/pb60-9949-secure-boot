@@ -45,6 +45,8 @@ The GRUB menu waits for a choice and defaults to the reader. There is no automat
 4. On the next USB boot choose **PB60: Attempt one Custom-mode write**. Type uppercase **`CUSTOM`** and press Enter only if you approve the setting change. Anything else cancels. Return to Windows after the attempt. Check `PB60_CUSTOM.TXT`: the successful run reported zero status for `SetVariable` and `GetVariable`, `Readback data=01010000000000`, and `PB60_WRITE_VERIFIED`. An incomplete journal means the outcome is unknown; check read-only and do not retry. GRUB may show `image not loaded` after a helper has already returned; the journal is the evidence.
 5. Verify the persisted setting before touching PK. On the tested Windows machine a direct read of `SecureBootSetup` returned `01010000000000` with attributes `0x7`. Alternatively, reboot to the already-trusted **read-only** USB helper and check the new numbered log. Secure Boot should still be enabled at this stage.
 
+**Keyboard note from my PB60 test.** Caps Lock and Shift seemed to cancel earlier attempts. On the successful attempt I typed the word and pressed Enter, and I don't know what case the firmware passed to the helper. The tested helper compares the UEFI input against uppercase `CUSTOM` followed by Enter. The journal confirms the write and readback but does not record the keystrokes.
+
 ## 3. Remove the Platform Key only
 
 Record the pre-deletion state and, if you want proof of which databases changed, hash the byte arrays returned by `Get-SecureBootUEFI` for `PK`, `KEK`, `db`, and `dbx` from Administrator PowerShell. Never publish the raw databases or private recovery keys.
